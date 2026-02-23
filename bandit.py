@@ -1,8 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+DEFAULT_K = 10
+K_VALUES = [5, 10, 20]
+
 class Bandit:
-    def __init__(self, k=10):
+    def __init__(self, k=DEFAULT_K):
         self.k = k
         self.q_true = np.random.normal(0, 1, k)   # true action values
         self.Q_est = np.zeros(k)                  # estimated action values
@@ -15,7 +18,7 @@ class Bandit:
         self.N[action] += 1
         self.Q_est[action] += (reward - self.Q_est[action]) / self.N[action]
 
-def run_experiment(epsilon, n_steps=2000, n_tasks=2000, k=10):
+def run_experiment(epsilon, n_steps=2000, n_tasks=2000, k=DEFAULT_K):
     rewards = np.zeros(n_steps)
     optimal_actions = np.zeros(n_steps)
     for _ in range(n_tasks):
@@ -40,30 +43,36 @@ def run_experiment(epsilon, n_steps=2000, n_tasks=2000, k=10):
     return rewards, optimal_actions
 
 # Run experiments
+k_values = K_VALUES
 epsilons = [0, 0.01, 0.1]
 results = {}
-for eps in epsilons:
-    print(f"Running epsilon = {eps}...")
-    rewards, optimal = run_experiment(eps)
-    results[eps] = (rewards, optimal)
+for k in k_values:
+    results[k] = {}
+    for eps in epsilons:
+        print(f"Running k = {k}, epsilon = {eps}...")
+        rewards, optimal = run_experiment(eps, k=k)
+        results[k][eps] = (rewards, optimal)
 
-# Plot results
-plt.figure(figsize=(12,5))
+# Plot results (one figure per k)
+for k in k_values:
+    plt.figure(figsize=(12,5))
 
-plt.subplot(1,2,1)
-for eps in epsilons:
-    plt.plot(results[eps][0], label=f'ε={eps}')
-plt.xlabel('Steps')
-plt.ylabel('Average reward')
-plt.legend()
+    plt.subplot(1,2,1)
+    for eps in epsilons:
+        plt.plot(results[k][eps][0], label=f'ε={eps}')
+    plt.xlabel('Steps')
+    plt.ylabel('Average reward')
+    plt.title(f'Average reward (k={k})')
+    plt.legend()
 
-plt.subplot(1,2,2)
-for eps in epsilons:
-    plt.plot(results[eps][1], label=f'ε={eps}')
-plt.xlabel('Steps')
-plt.ylabel('% Optimal action')
-plt.legend()
+    plt.subplot(1,2,2)
+    for eps in epsilons:
+        plt.plot(results[k][eps][1], label=f'ε={eps}')
+    plt.xlabel('Steps')
+    plt.ylabel('% Optimal action')
+    plt.title(f'Optimal action % (k={k})')
+    plt.legend()
 
-plt.tight_layout()
-plt.savefig('figure1.png')
-plt.show()
+    plt.tight_layout()
+    plt.savefig(f'figure_k{k}.png')
+    plt.show()
