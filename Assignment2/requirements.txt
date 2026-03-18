@@ -1,0 +1,29 @@
+# Requirements for Deep Reinforcement Learning Project
+# Including GPU support and visualization capabilities
+
+# For CUDA support, install appropriate torch version
+# Use: pip install torch --index-url https://download.pytorch.org/whl/cu118 for CUDA 11.8
+# Or: pip install torch --index-url https://download.pytorch.org/whl/cu121 for CUDA 12.1
+torch>=2.0.0
+torchvision
+torchaudio
+gymnasium>=0.29.0
+gymnasium[box2d]>=0.29.0  # For LunarLander-v3 environment
+numpy>=1.21.0
+matplotlib>=3.5.0
+imageio>=2.9.0
+ipython>=8.0.0
+ipykernel>=6.5.0
+
+# Installation instruction:
+# For CPU-only version:
+# pip install -r requirements.txt
+#
+# For GPU support (after installing CUDA):
+# pip uninstall torch torchvision torchaudio
+# Then reinstall with CUDA support:
+# For CUDA 11.8: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# For CUDA 12.1: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# 
+# For users in China, you can use a mirror source:
+# python -m pip install -r requirements.txt
