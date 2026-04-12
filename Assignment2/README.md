@@ -38,10 +38,8 @@ jupyter notebook
 
 ## 文件说明
 
-- `check_environment.py`: 检查PyTorch和CUDA环境
-- `train_with_gpu_check.py`: 主训练脚本，自动检测GPU
-- `Problem1_With_GPU_Check.ipynb`: Jupyter Notebook实现
 - `requirements.txt`: 项目依赖
+- `lunar_lander_dqn.py`: 主要程序
 
 ## GPU加速
 
