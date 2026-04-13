@@ -18,6 +18,7 @@ try:
     import torch.optim as optim
     import random
     from collections import deque
+    from pathlib import Path
     import matplotlib.pyplot as plt
     import imageio
 except ImportError as e:
@@ -38,6 +39,11 @@ random.seed(SEED)
 # Device configuration
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
+
+# Always write generated artifacts to Assignment2 (script directory).
+OUTPUT_DIR = Path(__file__).resolve().parent
+TRAINING_CURVE_PATH = OUTPUT_DIR / "training_curves.png"
+DEFAULT_GIF_PATH = OUTPUT_DIR / "lander_final.gif"
 
 
 class ReplayBuffer:
@@ -237,14 +243,21 @@ def plot_results(rewards, losses):
     plt.legend()
     
     plt.tight_layout()
-    plt.savefig('training_curves.png', dpi=150)
-    print("\nTraining curves saved to 'training_curves.png'")
+    plt.savefig(TRAINING_CURVE_PATH, dpi=150)
+    print(f"\nTraining curves saved to '{TRAINING_CURVE_PATH}'")
     plt.show()
 
 
 def record_episode(agent, env_name="LunarLander-v3", 
-                   gif_path="lander_final.gif"):
+                   gif_path=None):
     """Record and save a test episode as GIF."""
+    if gif_path is None:
+        gif_path = DEFAULT_GIF_PATH
+    else:
+        gif_path = Path(gif_path)
+        if not gif_path.is_absolute():
+            gif_path = OUTPUT_DIR / gif_path
+
     env = gym.make(env_name, render_mode="rgb_array")
     frames = []
     state, _ = env.reset()
@@ -257,7 +270,7 @@ def record_episode(agent, env_name="LunarLander-v3",
         done = terminated or truncated
         
     env.close()
-    imageio.mimsave(gif_path, frames, fps=30)
+    imageio.mimsave(str(gif_path), frames, fps=30)
     print(f"GIF saved to '{gif_path}'")
 
 
