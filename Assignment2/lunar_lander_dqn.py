@@ -11,8 +11,12 @@ Requirements met:
 
 # Check dependencies first
 try:
+    import csv
     import gymnasium as gym
+    import json
     import numpy as np
+    import shutil
+    import time
     import torch
     import torch.nn as nn
     import torch.optim as optim
@@ -37,13 +41,17 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 # Device configuration
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Set FORCE_CPU=True to compare runtime against GPU on the same machine.
+FORCE_CPU = False
+device = torch.device("cpu" if FORCE_CPU else ("cuda" if torch.cuda.is_available() else "cpu"))
 print(f"Using device: {device}")
 
 # Always write generated artifacts to Assignment2 (script directory).
 OUTPUT_DIR = Path(__file__).resolve().parent
 TRAINING_CURVE_PATH = OUTPUT_DIR / "training_curves.png"
 DEFAULT_GIF_PATH = OUTPUT_DIR / "lander_final.gif"
+RUNS_DIR = OUTPUT_DIR / "run_results"
+RUNS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class ReplayBuffer:
@@ -167,9 +175,13 @@ class DQNAgent:
         self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
 
 
-def train(env_name="LunarLander-v3", episodes=1000):
+def train(env_name="LunarLander-v3", episodes=1000, render_during_training=False):
     """Train the DQN agent."""
-    env = gym.make(env_name, render_mode="rgb_array")
+    # Disable rendering during training for speed; rendering is only needed for final GIF export.
+    if render_during_training:
+        env = gym.make(env_name, render_mode="rgb_array")
+    else:
+        env = gym.make(env_name)
     state_size = env.observation_space.shape[0]
     action_size = env.action_space.n
 
@@ -212,6 +224,90 @@ def train(env_name="LunarLander-v3", episodes=1000):
 
     env.close()
     return agent, episode_rewards, episode_lengths, all_losses
+
+
+def save_training_results(rewards, losses, lengths, training_seconds):
+    """Persist full per-run metrics for rewards and losses."""
+    run_id = time.strftime("%Y%m%d_%H%M%S")
+    run_dir = RUNS_DIR / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    rewards_path = run_dir / "rewards.csv"
+    losses_path = run_dir / "losses.csv"
+    summary_path = run_dir / "summary.json"
+    raw_series_path = run_dir / "raw_series.npz"
+
+    reward_rolling = None
+    if len(rewards) >= 50:
+        reward_rolling = np.convolve(rewards, np.ones(50) / 50, mode='valid')
+
+    with rewards_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["episode", "reward", "rolling_reward_50"])
+        for idx, reward in enumerate(rewards, start=1):
+            rolling_value = ""
+            if reward_rolling is not None and idx >= 50:
+                rolling_value = float(reward_rolling[idx - 50])
+            writer.writerow([idx, float(reward), rolling_value])
+
+    loss_rolling = None
+    if len(losses) >= 100:
+        loss_rolling = np.convolve(losses, np.ones(100) / 100, mode='valid')
+
+    with losses_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["update_step", "loss", "rolling_loss_100"])
+        for idx, loss in enumerate(losses, start=1):
+            rolling_value = ""
+            if loss_rolling is not None and idx >= 100:
+                rolling_value = float(loss_rolling[idx - 100])
+            writer.writerow([idx, float(loss), rolling_value])
+
+    np.savez_compressed(
+        raw_series_path,
+        rewards=np.asarray(rewards, dtype=np.float32),
+        losses=np.asarray(losses, dtype=np.float32),
+        episode_lengths=np.asarray(lengths, dtype=np.int32),
+    )
+
+    if len(rewards) == 0:
+        last_100_avg = 0.0
+        avg_reward = 0.0
+        max_reward = 0.0
+        avg_len = 0.0
+    else:
+        last_100_avg = float(np.mean(rewards[-100:]))
+        avg_reward = float(np.mean(rewards))
+        max_reward = float(np.max(rewards))
+        avg_len = float(np.mean(lengths)) if len(lengths) > 0 else 0.0
+
+    summary = {
+        "run_id": run_id,
+        "device": str(device),
+        "force_cpu": FORCE_CPU,
+        "episodes": len(rewards),
+        "updates": len(losses),
+        "average_reward": avg_reward,
+        "max_reward": max_reward,
+        "last_100_avg_reward": last_100_avg,
+        "average_episode_length": avg_len,
+        "training_seconds": float(training_seconds),
+        "artifacts": {
+            "rewards_csv": str(rewards_path),
+            "losses_csv": str(losses_path),
+            "raw_series_npz": str(raw_series_path),
+        },
+    }
+
+    with summary_path.open("w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
+
+    print(f"\nRun metrics saved to '{run_dir}'")
+    print(f"- Rewards: {rewards_path}")
+    print(f"- Losses: {losses_path}")
+    print(f"- Summary: {summary_path}")
+    print(f"- Raw series: {raw_series_path}")
+    return run_dir, summary
 
 
 def plot_results(rewards, losses):
@@ -277,7 +373,10 @@ def record_episode(agent, env_name="LunarLander-v3",
 def main():
     """Main training pipeline."""
     # Train agent
-    agent, rewards, lengths, losses = train(episodes=1000)
+    train_start = time.time()
+    agent, rewards, lengths, losses = train(episodes=1000, render_during_training=False)
+    training_seconds = time.time() - train_start
+    run_dir, _ = save_training_results(rewards, losses, lengths, training_seconds)
     
     # Print summary
     print("\n" + "=" * 60)
@@ -288,6 +387,7 @@ def main():
     print(f"Highest Reward: {max(rewards):.2f}")
     print(f"Last 100 Episodes Avg Reward: {np.mean(rewards[-100:]):.2f}")
     print(f"Average Episode Length: {np.mean(lengths):.1f}")
+    print(f"Training Time: {training_seconds/60:.2f} minutes")
     print(f"Device: {device}")
     if device.type == "cuda":
         print("✓ GPU acceleration used")
@@ -297,10 +397,18 @@ def main():
     
     # Plot results
     plot_results(rewards, losses)
+    run_curve_path = run_dir / "training_curves.png"
+    if TRAINING_CURVE_PATH.exists() and run_curve_path != TRAINING_CURVE_PATH:
+        shutil.copy2(TRAINING_CURVE_PATH, run_curve_path)
+        print(f"Run-specific curve copy saved to '{run_curve_path}'")
     
     # Record final performance
     print("\nRecording final episode...")
     record_episode(agent)
+    run_gif_path = run_dir / "lander_final.gif"
+    if DEFAULT_GIF_PATH.exists() and run_gif_path != DEFAULT_GIF_PATH:
+        shutil.copy2(DEFAULT_GIF_PATH, run_gif_path)
+        print(f"Run-specific GIF copy saved to '{run_gif_path}'")
 
 
 if __name__ == "__main__":

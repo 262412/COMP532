@@ -1,0 +1,17 @@
+{
+  "run_id": "20260413_155450",
+  "device": "cpu",
+  "force_cpu": true,
+  "episodes": 1000,
+  "updates": 277812,
+  "average_reward": 216.70390469099584,
+  "max_reward": 322.27804765127325,
+  "last_100_avg_reward": 251.70588710422047,
+  "average_episode_length": 277.875,
+  "training_seconds": 760.6002683639526,
+  "artifacts": {
+    "rewards_csv": "d:\\PythonProject\\Git\\Assignment2\\run_results\\20260413_155450\\rewards.csv",
+    "losses_csv": "d:\\PythonProject\\Git\\Assignment2\\run_results\\20260413_155450\\losses.csv",
+    "raw_series_npz": "d:\\PythonProject\\Git\\Assignment2\\run_results\\20260413_155450\\raw_series.npz"
+  }
+}

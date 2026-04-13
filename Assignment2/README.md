@@ -29,7 +29,7 @@ python lunar_lander_dqn.py
 ```bash
 jupyter notebook
 ```
-然后打开 `Problem1_Clean.ipynb` 或 `Problem1.ipynb`。
+然后打开 `Problem1_Clean.ipynb`。
 
 ## 生成文件位置
 
@@ -42,7 +42,6 @@ jupyter notebook
 - `requirements.txt`: 项目依赖
 - `lunar_lander_dqn.py`: 主要训练脚本
 - `Problem1_Clean.ipynb`: 清理版 notebook
-- `Problem1.ipynb`: 练习版 notebook
 
 ## GPU加速
 
