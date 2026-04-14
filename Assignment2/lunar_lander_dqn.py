@@ -36,8 +36,8 @@ torch.manual_seed(SEED)
 np.random.seed(SEED)
 random.seed(SEED)
 
-# Device configuration
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Device configuration (CPU-only as requested)
+device = torch.device("cpu")
 print(f"Using device: {device}")
 
 # Always write generated artifacts next to this script.

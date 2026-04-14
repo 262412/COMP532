@@ -46,4 +46,4 @@ jupyter notebook
 
 ## GPU加速
 
-如果安装了 NVIDIA GPU 和 CUDA 兼容的 PyTorch 版本，训练将自动使用 GPU 加速。
+当前代码默认使用 CPU 训练。如果需要启用 GPU，可将设备设置改回自动检测 CUDA 的写法。
