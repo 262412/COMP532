@@ -34,8 +34,9 @@ jupyter notebook
 ## 生成文件位置
 
 - 训练曲线图会保存为 `training_curves.png`
-- 最终演示 GIF 会保存为 `lander_final.gif`（脚本和 Clean notebook）或 `lander.gif`（Problem1 notebook）
-- 以上文件都会写入 `Assignment2` 目录，不依赖你从哪个工作目录启动程序
+- 最终演示 GIF 会保存为 `lander_final.gif`（脚本和 Clean notebook）
+- 运行 `lunar_lander_dqn.py` 时，输出写入脚本所在目录
+- 运行 `Problem1_Clean.ipynb` 时，输出写入当前工作目录（通常是你打开 notebook 的目录）
 
 ## 文件说明
 
