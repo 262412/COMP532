@@ -1,0 +1,20 @@
+# Assignment2 - Ignore run result files
+# Only keep these three result files ignored
+
+# Training results
+training_curves.png
+lander_final.gif
+*.gif
+*.png
+
+# Model checkpoints (if any)
+*.pth
+*.pt
+*.model
+
+# Temporary files
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+Thumbs.db
